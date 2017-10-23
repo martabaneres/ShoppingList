@@ -39,7 +39,7 @@ public class ShoppingListActivity extends AppCompatActivity {
         itemList.add("Zanahorias");
         itemList.add("Yogures");
 
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, itemList);
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, itemList);
 
         btn_add.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -84,7 +84,7 @@ public class ShoppingListActivity extends AppCompatActivity {
 
     private void addItem() {
         String item_text = edit_item.getText().toString();
-        if (item_text.isEmpty()) {
+        if (!item_text.isEmpty()) {
             itemList.add(item_text);
             adapter.notifyDataSetChanged();
             edit_item.setText("");
