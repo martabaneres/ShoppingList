@@ -13,7 +13,8 @@ public class ShoppingItem {
         this.checked = false;
     }
 
-    public ShoppingItem(boolean checked) {
+    public ShoppingItem(String text, boolean checked) {
+        this.text = text;
         this.checked = checked;
     }
 
@@ -31,5 +32,9 @@ public class ShoppingItem {
 
     public void setChecked(boolean checked) {
         this.checked = checked;
+    }
+
+    public void toggleChecked() {
+        this.checked = !this.checked;
     }
 }

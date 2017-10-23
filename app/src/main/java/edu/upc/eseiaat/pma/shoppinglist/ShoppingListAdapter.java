@@ -28,7 +28,7 @@ public class ShoppingListAdapter extends ArrayAdapter<ShoppingItem> {
         View result = convertView;
         if (result == null) {
             LayoutInflater inflater = LayoutInflater.from(getContext());
-            result = Inflater.inflate(R.layout.shopping_item, null);
+            result = inflater.inflate(R.layout.shopping_item, null);
         }
         CheckBox checkbox = (CheckBox) result.findViewById(R.id.shopping_item);
         ShoppingItem item = getItem(position);
