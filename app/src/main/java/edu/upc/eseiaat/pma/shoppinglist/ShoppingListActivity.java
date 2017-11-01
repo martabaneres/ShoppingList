@@ -1,11 +1,15 @@
 package edu.upc.eseiaat.pma.shoppinglist;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -13,10 +17,20 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 
+import static android.R.string.no;
+
 public class ShoppingListActivity extends AppCompatActivity {
+
+    private static final String FILENAME = "shopping_list.txt";
+    private static final int MAX_BYTES = 8000;
 
     private ArrayList<ShoppingItem> itemList;
     private ShoppingListAdapter adapter;
@@ -24,6 +38,51 @@ public class ShoppingListActivity extends AppCompatActivity {
     private ListView list;
     private Button btn_add;
     private EditText edit_item;
+
+    private void writeItemList() {
+        String FILENAME = "shopping_list.txt";
+        try {
+            FileOutputStream fos = openFileOutput(FILENAME, Context.MODE_PRIVATE);
+            for (int i = 0; i < itemList.size(); i++) {
+                ShoppingItem it = itemList.get(i);
+                String line = String.format("%s;%b\n", it.getText(), it.isChecked());
+                fos.write(line.getBytes());
+            }
+            fos.close();
+        } catch (FileNotFoundException e) {
+            Toast.makeText(this, R.string.cannot_write, Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            Toast.makeText(this, R.string.cannot_write, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void readItemList() {
+        itemList = new ArrayList<>();
+        try {
+            FileInputStream fis = openFileInput(FILENAME);
+            byte[] buffer = new byte[MAX_BYTES];
+            int nread = fis.read(buffer);
+            if (nread > 0) {
+                String content = new String(buffer, 0, nread);
+                String[] lines = content.split("\n");
+                for (int i = 0; i < lines.length; i++) {
+                    String[] parts = lines[i].split(";");
+                    itemList.add(new ShoppingItem(parts[0], parts[1].equals("true")));
+                }
+            }
+            fis.close();
+        } catch (FileNotFoundException e) {
+
+        } catch (IOException e) {
+            Toast.makeText(this, R.string.cannot_read, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        writeItemList();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,11 +93,7 @@ public class ShoppingListActivity extends AppCompatActivity {
         btn_add = (Button) findViewById(R.id.btn_add);
         edit_item = (EditText) findViewById(R.id.edit_item);
 
-        itemList = new ArrayList<>();
-        itemList.add(new ShoppingItem("Patatas", true));
-        itemList.add(new ShoppingItem("Papel de WC", true));
-        itemList.add(new ShoppingItem("Zanahorias"));
-        itemList.add(new ShoppingItem("Yogures"));
+        readItemList();
 
         adapter = new ShoppingListAdapter(this, R.layout.shopping_item, itemList);
 
@@ -100,5 +155,53 @@ public class ShoppingListActivity extends AppCompatActivity {
             edit_item.setText("");
         }
         list.smoothScrollToPosition(itemList.size()-1);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.options, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.clear_checked:
+                clearChecked();
+                return true;
+            case R.id.clear_all:
+                clearAll();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void clearAll() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.confirm);
+        builder.setMessage(R.string.confirm_clear_all);
+        builder.setPositiveButton(R.string.clear_all, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                itemList.clear();
+                adapter.notifyDataSetChanged();
+            }
+        });
+        builder.setNegativeButton(android.R.string.cancel, null);
+        builder.create().show();
+    }
+
+    private void clearChecked() {
+        int i = 0;
+        while (i < itemList.size()) {
+            if (itemList.get(i).isChecked()) {
+                itemList.remove(i);
+            } else {
+                i++;
+            }
+        }
+        adapter.notifyDataSetChanged();
     }
 }
